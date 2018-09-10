@@ -33,20 +33,12 @@ def on_message(sender, channel, message):
         GPIO.output(17, 0)
 
         activate_webcam = subprocess.call('fswebcam --no-banner -r 1920x1080 --crop 480x155,570x500 image.jpg', shell=True)
-
         get_data = os.popen('ssocr -t 30 image.jpg -D -d -1').read()
-
         upload_s3 = os.system('sh upload_s3.sh')
-
-
-        
-
         data = get_data.rstrip('\n')
+        data = replaceMultiple(data, ['.', '_'], "")
 
-        data.translate(None, "_-,.")
-
-        
-        print data
+        print 'Output: ' + data
         message = '{"id":"ID_DEV1","text":"'+ str(data) +'","sentAt":"' + formatted_time + '"}'
         ortc_client.send(channel, message)
  
@@ -57,7 +49,13 @@ def on_subscribed(sender, channel):
     print 'Subscribed to channel : ' + channel
     message = '{"id":"ID_DEV1","text":"HI, IM ALIVE :)","sentAt":"' + formatted_time + '"}'
     ortc_client.send(channel, message)
- 
+
+def replaceMultiple(mainString, toBeReplaces, newString):
+    for elem in toBeReplaces :
+        if elem in mainString :
+            mainString = mainString.replace(elem, newString)
+    return  mainString
+
 ortc_client.set_on_connected_callback(on_connected)
 ortc_client.set_on_subscribed_callback(on_subscribed)
 
